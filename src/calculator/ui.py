@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from engine import evaluate_expression, set_angle_mode
+from logic import evaluate_expression, set_angle_mode
 import random
 import re
 
