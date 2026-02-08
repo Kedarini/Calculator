@@ -78,15 +78,41 @@ PRECEDENCE = {
     "exp": (4, "R"),
 }
 
+
 def add_spaces(expr: str) -> str:
-    expr = re.sub(r'([\+\-\*/\(\)\^!])', r' \1 ', expr)
+    if not expr:
+        return ""
+
+    # Step 1: Explicitly space out known multi-char and special unary operators
+    special_unary = {
+        "³√": " ³√ ",
+        "√": " √ ",
+        "1/x": " 1/ ",
+        "x²": " x² ",
+        "x³": " x³ ",
+        "!": " ! ",  # postfix factorial
+    }
+
+    for op, spaced in special_unary.items():
+        expr = expr.replace(op, spaced)
+
+    # Step 2: Space single-char operators
+    expr = re.sub(r'([+\-*/^()])', r' \1 ', expr)
+
+    # Step 3: Space known functions and constants (with word boundaries)
     for func in OPS:
-        expr = expr.replace(func, f" {func} ")
+        expr = re.sub(rf'\b{re.escape(func)}\b', f' {func} ', expr, flags=re.IGNORECASE)
+
     for const in CONSTANTS:
-        expr = expr.replace(const, f" {const} ")
-    expr = re.sub(r'\s+', ' ', expr)
-    expr = re.sub(r'(\d)(\s*)(π|e|Ans|\()', r'\1 * \3', expr)
-    expr = re.sub(r'(\))(\s*)(\d|π|e|Ans|\()', r'\1 * \3', expr)
+        expr = re.sub(rf'\b{re.escape(const)}\b', f' {const} ', expr)
+
+    # Step 4: Normalize spaces
+    expr = re.sub(r'\s+', ' ', expr.strip())
+
+    # Step 5: Handle implicit multiplication (number next to constant/function/parenthesis)
+    expr = re.sub(r'(\d|\.)\s*([πeAns(])', r'\1 * \2', expr)
+    expr = re.sub(r'([)])\s*(\d|\.|π|e|Ans|[a-zA-Z])', r'\1 * \2', expr)
+
     return expr.strip()
 
 def shunting_yard(expr):
