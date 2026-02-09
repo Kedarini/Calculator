@@ -176,7 +176,11 @@ class CalculatorGUI:
                     self.precision_btn = btn
 
         btn_frame.columnconfigure(tuple(range(5)), weight=1)
-
+        self.buttons_dict = {}
+        for widget in btn_frame.winfo_children():
+            text = widget.cget("text")
+            if text:  # pomijamy ewentualne puste
+                self.buttons_dict[text] = widget
     # ────────────────────────────────────────────────
     # Unary / postfix immediate application – no symbols in entry
     # ────────────────────────────────────────────────
@@ -356,14 +360,19 @@ class CalculatorGUI:
 
     def memory_op(self, op):
         try:
-            val = float(evaluate_expression(self.entry_var.get()))
-            if op == 'M+':
-                self.memory += val
-            elif op == 'M-':
-                self.memory -= val
+            if op in ('M+', 'M-'):
+                current = self.entry_var.get().strip()
+                if not current or current == "Error":
+                    return  # nic nie rób jeśli pole puste/błąd
+                val = float(evaluate_expression(current))
+                if op == 'M+':
+                    self.memory += val
+                elif op == 'M-':
+                    self.memory -= val
             elif op == 'MR':
-                self.entry_var.set(self.entry_var.get() + str(self.memory))
-        except:
+                self.entry_var.set(str(self.memory))
+        except Exception as e:
+            print(f"Memory error: {e}")  # opcjonalny debug
             self.entry_var.set("Error")
 
     def update_paren(self):
