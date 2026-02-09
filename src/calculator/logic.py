@@ -63,7 +63,7 @@ PRECEDENCE = {
     "x²": (4, "R"),
     "x³": (4, "R"),
     "√": (4, "R"),
-    "³√": (4, "R"),
+    "3√": (4, "R"),
     "1/x": (4, "R"),
     "%": (4, "R"),
     "!": (4, "L"),
@@ -85,7 +85,7 @@ def add_spaces(expr: str) -> str:
 
     # Step 1: Explicitly space out known multi-char and special unary operators
     special_unary = {
-        "³√": " ³√ ",
+        "³√": " 3√ ",
         "√": " √ ",
         "1/x": " 1/ ",
         "x²": " x² ",
@@ -112,6 +112,7 @@ def add_spaces(expr: str) -> str:
     # Step 5: Handle implicit multiplication (number next to constant/function/parenthesis)
     expr = re.sub(r'(\d|\.)\s*([πeAns(])', r'\1 * \2', expr)
     expr = re.sub(r'([)])\s*(\d|\.|π|e|Ans|[a-zA-Z])', r'\1 * \2', expr)
+    expr = re.sub(r'(3√)', r' \1 ', expr)
 
     return expr.strip()
 
@@ -144,18 +145,28 @@ def shunting_yard(expr):
 
 def evaluate_rpn(tokens):
     stack = []
+    print(f"Evaluating tokens: {tokens}")  # ← dodaj
     for token in tokens:
         if token in OPS:
             func = OPS[token]
-            if token in "+-*/^":
-                b, a = stack.pop(), stack.pop()
+            if token == "!":
+                a = stack.pop()
+                print(f"Factorial of: {a} (type: {type(a)})")  # ← kluczowe!
+                if not isinstance(a, (int, float)) or not float(a).is_integer() or a < 0:
+                    raise ValueError("Invalid factorial input")
+                stack.append(func(int(a)))
+            elif token in "+-*/^":
+                b = stack.pop()
+                a = stack.pop()
                 stack.append(func(a, b))
             else:
-                stack.append(func(stack.pop()))
+                a = stack.pop()
+                stack.append(func(a))
         elif token in CONSTANTS:
             stack.append(CONSTANTS[token])
         else:
             stack.append(float(token))
+    print(f"Final stack: {stack}")
     return stack[0]
 
 def evaluate_expression(expression: str) -> str:

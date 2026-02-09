@@ -10,9 +10,7 @@ class CalculatorGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Calculator")
-        # No fixed size → natural layout
-        # self.root.geometry("600x530")  ← removed
-        # self.root.resizable(False, False)  ← removed, can resize now
+        self.root.resizable(False, False)
 
         # Nord theme colors
         self.BG = "#2e3440"
@@ -66,7 +64,9 @@ class CalculatorGUI:
         hist_frame = tk.Frame(main, bg=self.BG)
         hist_frame.grid(row=0, column=1, sticky="nsew", padx=(12, 0))
         hist_frame.columnconfigure(0, weight=1)
+        hist_frame.rowconfigure(0, weight=1)  # ← important!
 
+        # Header
         tk.Label(
             hist_frame,
             text="History",
@@ -75,21 +75,53 @@ class CalculatorGUI:
             font=("Arial", 12, "bold")
         ).pack(anchor="w", pady=(0, 4))
 
+        # Container for Listbox + Scrollbar (use pack with side-by-side)
+        list_container = tk.Frame(hist_frame, bg=self.BG)
+        list_container.pack(fill="both", expand=True)
+
         self.history_box = tk.Listbox(
-            hist_frame,
+            list_container,
             font=("Arial", 11),
+            width=40,
             bg=self.ENTRY_BG,
             fg=self.TEXT,
             bd=0,
             highlightthickness=0,
             selectbackground=self.BTN_ALT,
-            activestyle="none"
+            activestyle="none",
+            yscrollcommand=lambda *args: scrollbar.set(*args)
         )
-        self.history_box.pack(fill="both", expand=True)
+        self.history_box.pack(side="left", fill="both", expand=True)
 
-        scrollbar = ttk.Scrollbar(hist_frame, orient="vertical", command=self.history_box.yview)
+        # Scrollbar – pack on right AFTER Listbox
+        scrollbar = ttk.Scrollbar(list_container, orient="vertical", command=self.history_box.yview)
         scrollbar.pack(side="right", fill="y")
+
+        # Apply style (your existing one, but ensure it's applied)
         self.history_box.config(yscrollcommand=scrollbar.set)
+        style = ttk.Style()
+        style.theme_use('clam')
+
+        style.configure("Custom.Vertical.TScrollbar",
+                        background="#4c566a",
+                        troughcolor=self.BG,
+                        troughrelief="flat",
+                        borderwidth=0,
+                        width=6,  # slim
+                        arrowsize=0,  # hide arrows for minimal look
+                        )
+
+        style.map("Custom.Vertical.TScrollbar",
+                  background=[('active', '#5e81ac'), ('pressed', '#81a1c1')],
+                  )
+
+        # Then create scrollbar with style:
+        scrollbar = ttk.Scrollbar(
+            list_container,
+            orient="vertical",
+            command=self.history_box.yview,
+            style="Custom.Vertical.TScrollbar"
+        )
 
         # ────────────────────────────────────────────────
         # Buttons layout
