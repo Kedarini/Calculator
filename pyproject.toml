@@ -3,13 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "calkulator"
+name = "calculator"
 version = "0.1.0"
 description = "Scientific calculator in tkinter"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [{name = "Radosław Damps", email = "kedardamps@gmail.com"}]
+
+[project.scripts]
+calculator = "calculator.__main__:main"
 
 dependencies = []
 
