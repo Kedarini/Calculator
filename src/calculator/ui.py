@@ -1,9 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
-from .logic import evaluate_expression, set_angle_mode
+import json
+from pathlib import Path
+from datetime import datetime
 import random
 import math
 import re
+
+# Zakładam, że masz moduł logic.py z funkcjami:
+# evaluate_expression(expr) → zwraca string (wynik lub "Division by zero", "Error" itp.)
+# set_angle_mode(mode)      → "DEG" / "RAD"
+from .logic import evaluate_expression, set_angle_mode
 
 
 class CalculatorGUI:
@@ -27,6 +34,10 @@ class CalculatorGUI:
         self.precision_mode = "FLOAT"
         self.fixed_decimals = 4
         self.memory = 0
+
+        # Historia
+        self.history_file = Path("history.json")
+        self.history_entries = self.load_history()
 
         # Display
         self.entry = tk.Entry(
@@ -55,6 +66,7 @@ class CalculatorGUI:
         # Main container
         main = tk.Frame(root, bg=self.BG)
         main.pack(fill="both", expand=True, padx=12, pady=8)
+        main.columnconfigure(1, weight=1)   # historia ma się rozciągać
 
         # Button frame (left side)
         btn_frame = tk.Frame(main, bg=self.BG)
@@ -63,10 +75,7 @@ class CalculatorGUI:
         # History frame (right side)
         hist_frame = tk.Frame(main, bg=self.BG)
         hist_frame.grid(row=0, column=1, sticky="nsew", padx=(12, 0))
-        hist_frame.columnconfigure(0, weight=1)
-        hist_frame.rowconfigure(0, weight=1)  # ← important!
 
-        # Header
         tk.Label(
             hist_frame,
             text="History",
@@ -75,7 +84,6 @@ class CalculatorGUI:
             font=("Arial", 12, "bold")
         ).pack(anchor="w", pady=(0, 4))
 
-        # Container for Listbox + Scrollbar (use pack with side-by-side)
         list_container = tk.Frame(hist_frame, bg=self.BG)
         list_container.pack(fill="both", expand=True)
 
@@ -89,39 +97,18 @@ class CalculatorGUI:
             highlightthickness=0,
             selectbackground=self.BTN_ALT,
             activestyle="none",
-            yscrollcommand=lambda *args: scrollbar.set(*args)
         )
         self.history_box.pack(side="left", fill="both", expand=True)
 
-        # Scrollbar – pack on right AFTER Listbox
         scrollbar = ttk.Scrollbar(list_container, orient="vertical", command=self.history_box.yview)
         scrollbar.pack(side="right", fill="y")
-
-        # Apply style (your existing one, but ensure it's applied)
         self.history_box.config(yscrollcommand=scrollbar.set)
-        style = ttk.Style()
-        style.theme_use('clam')
 
-        style.configure("Custom.Vertical.TScrollbar",
-                        background="#4c566a",
-                        troughcolor=self.BG,
-                        troughrelief="flat",
-                        borderwidth=0,
-                        width=6,  # slim
-                        arrowsize=0,  # hide arrows for minimal look
-                        )
-
-        style.map("Custom.Vertical.TScrollbar",
-                  background=[('active', '#5e81ac'), ('pressed', '#81a1c1')],
-                  )
-
-        # Then create scrollbar with style:
-        scrollbar = ttk.Scrollbar(
-            list_container,
-            orient="vertical",
-            command=self.history_box.yview,
-            style="Custom.Vertical.TScrollbar"
-        )
+        # Wczytujemy i wypełniamy historię
+        for entry in self.history_entries:
+            self.history_box.insert(tk.END, entry)
+        if self.history_entries:
+            self.history_box.see(tk.END)
 
         # ────────────────────────────────────────────────
         # Buttons layout
@@ -176,13 +163,42 @@ class CalculatorGUI:
                     self.precision_btn = btn
 
         btn_frame.columnconfigure(tuple(range(5)), weight=1)
-        self.buttons_dict = {}
-        for widget in btn_frame.winfo_children():
-            text = widget.cget("text")
-            if text:  # pomijamy ewentualne puste
-                self.buttons_dict[text] = widget
+
     # ────────────────────────────────────────────────
-    # Unary / postfix immediate application – no symbols in entry
+    # Historia – metody
+    # ────────────────────────────────────────────────
+
+    def load_history(self):
+        if not self.history_file.exists():
+            return []
+        try:
+            with self.history_file.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("entries", [])[-200:]
+        except:
+            return []
+
+    def save_history(self):
+        try:
+            data = {
+                "entries": self.history_entries,
+                "last_updated": datetime.now().isoformat()
+            }
+            with self.history_file.open("w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+
+    def add_to_history(self, left: str, right: str):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"[{timestamp}] {left} = {right}"
+        self.history_entries.append(entry)
+        self.history_box.insert(tk.END, entry)
+        self.history_box.see(tk.END)
+        self.save_history()
+
+    # ────────────────────────────────────────────────
+    # Unary operations
     # ────────────────────────────────────────────────
 
     def apply_unary(self, op):
@@ -254,18 +270,17 @@ class CalculatorGUI:
 
             formatted = self.format_number(result)
             self.entry_var.set(formatted)
-            self.history_box.insert(tk.END, f"{hist_text} = {formatted}")
-            self.history_box.see(tk.END)
+            self.add_to_history(hist_text, formatted)
 
         except Exception:
             self.entry_var.set("Error")
 
     # ────────────────────────────────────────────────
-    # Other methods
+    # Pozostałe metody (bez zmian lub drobne poprawki)
     # ────────────────────────────────────────────────
 
     def get_command(self, char):
-        return {
+        commands = {
             'AC':     self.clear,
             '=':      self.calculate,
             'Back':   self.backspace,
@@ -279,23 +294,14 @@ class CalculatorGUI:
             'M-':     lambda: self.memory_op('M-'),
             'MR':     lambda: self.memory_op('MR'),
             'Ans':    lambda: self.append('Ans'),
-        }.get(char, lambda ch=char: self.append(ch))
+        }
+        return commands.get(char, lambda ch=char: self.append(ch))
 
     def append(self, ch):
         mapped = {
-            'xʸ': '^',
-            'x²': 'x²',
-            'x³': 'x³',
-            '√':  '√',
-            '³√x':'³√',
-            '1/x':'1/x',
-            '!':  '!',
-            'sin⁻¹': 'asin',
-            'cos⁻¹': 'acos',
-            'tan⁻¹': 'atan',
-            'eˣ':    'exp',
-            '10ˣ':   '10^x',
-            'EXP':   '*10^',
+            'xʸ': '^', 'x²': 'x²', 'x³': 'x³', '√': '√', '³√x': '³√',
+            '1/x': '1/x', '!': '!', 'sin⁻¹': 'asin', 'cos⁻¹': 'acos',
+            'tan⁻¹': 'atan', 'eˣ': 'exp', '10ˣ': '10^x', 'EXP': '*10^',
         }.get(ch, ch)
 
         current = self.entry_var.get()
@@ -325,25 +331,23 @@ class CalculatorGUI:
         if m:
             num = m.group(1)
             start = m.start(1)
-            if num.startswith('-'):
-                new_num = num[1:]
-            else:
-                new_num = '-' + num
+            new_num = num[1:] if num.startswith('-') else '-' + num
             self.entry_var.set(expr[:start] + new_num)
         self.update_paren()
 
     def calculate(self):
-        expr = self.entry_var.get()
+        expr = self.entry_var.get().strip()
         if not expr:
             return
-        try:
-            raw_result = evaluate_expression(expr)
-            formatted = self.format_number(raw_result)
-            self.entry_var.set(formatted)
-            self.history_box.insert(tk.END, f"{expr} = {formatted}")
-            self.history_box.see(tk.END)
-        except:
+
+        raw_result = evaluate_expression(expr)
+        if "Error" in str(raw_result) or raw_result in ("Division by zero",):
             self.entry_var.set("Error")
+            return
+
+        formatted = self.format_number(raw_result)
+        self.entry_var.set(formatted)
+        self.add_to_history(expr, formatted)
 
     def toggle_angle(self):
         self.angle_mode = "RAD" if self.angle_mode == "DEG" else "DEG"
@@ -363,7 +367,7 @@ class CalculatorGUI:
             if op in ('M+', 'M-'):
                 current = self.entry_var.get().strip()
                 if not current or current == "Error":
-                    return  # nic nie rób jeśli pole puste/błąd
+                    return
                 val = float(evaluate_expression(current))
                 if op == 'M+':
                     self.memory += val
@@ -371,8 +375,7 @@ class CalculatorGUI:
                     self.memory -= val
             elif op == 'MR':
                 self.entry_var.set(str(self.memory))
-        except Exception as e:
-            print(f"Memory error: {e}")  # opcjonalny debug
+        except:
             self.entry_var.set("Error")
 
     def update_paren(self):
@@ -388,7 +391,8 @@ class CalculatorGUI:
             return str(value)
 
         if self.precision_mode == "FIXED":
-            return f"{v:.{self.fixed_decimals}f}".rstrip('0').rstrip('.')
+            s = f"{v:.{self.fixed_decimals}f}"
+            return s.rstrip('0').rstrip('.') if '.' in s else s
         if abs(v) >= 1e12 or (0 < abs(v) < 1e-8 and v != 0):
             return f"{v:.8e}"
         return f"{v:g}"
