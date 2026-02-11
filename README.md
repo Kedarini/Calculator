@@ -36,3 +36,10 @@ source .venv/bin/activate      # Linux / macOS
 
 # 3. Run the calculator
 python -m calculator
+```
+
+## TO DO
+
+* Add animated GIF showing how the calculator work
+* Improve code clarity and performance
+* Better documentation
