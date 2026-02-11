@@ -14,9 +14,8 @@ A **full-featured scientific calculator** with a clean graphical user interface 
   - Other: factorial (!), abs, floor/ceil (more coming)
 - **Calculation history** panel — shows previous expressions + results
 - **Persistent history** saved to `history.json` (loads on startup)
-- Clear / All Clear buttons
 - Input validation & friendly error messages (division by zero, domain errors, syntax errors)
-- Responsive button styling (hover effects if implemented)
+- Responsive button styling, hover effects
 
 ## Screenshots
 
