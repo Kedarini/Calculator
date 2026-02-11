@@ -26,7 +26,7 @@ A **full-featured scientific calculator** with a clean graphical user interface 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/kedarini/calculator.git
-cd calculator
+cd calculator/src
 
 # 2. (recommended) create virtual environment
 python -m venv .venv
