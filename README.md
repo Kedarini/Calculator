@@ -42,4 +42,4 @@ python -m calculator
 
 * Add animated GIF showing how the calculator work
 * Improve code clarity and performance
-* Better documentation
+* Better documentations
