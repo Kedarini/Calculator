@@ -25,15 +25,13 @@ https://github.com/Kedarini/Calculator/raw/refs/heads/master/screenshots/calcula
 ## Installation
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/kedarini/calculator.git
 cd calculator
 
-# 2. (recommended) create virtual environment
-python -m venv .venv
-source .venv/bin/activate      # Linux / macOS
+# Recommended: virtual environment
+python -m venv venv
+source venv/bin/activate      # Linux / macOS
 # or on Windows:
-# .venv\Scripts\activate
+venv\Scripts\activate
 
-# 3. Run the calculator
-python -m calculator
+# No external dependencies needed (only standard library + tkinter)
