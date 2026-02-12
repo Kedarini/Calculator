@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [{name = "Radosław Damps", email = "kedardamps@gmail.com"}]
 
 [project.scripts]
-calculator = "__main__:main"
+calculator = "calculator.__main__:main"
 
 dependencies = []
 
