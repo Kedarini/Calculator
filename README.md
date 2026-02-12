@@ -19,7 +19,8 @@ A **full-featured scientific calculator** with a clean graphical user interface 
 
 ## Screenshots
 
-![alt text](https://github.com/Kedarini/Calculator/raw/refs/heads/master/screenshots/calculatorGUI.png)
+![alt text](https://github.com/Kedarini/Calculator/blob/master/media/calculatorGUI.png)
+![alt text](https://github.com/Kedarini/Calculator/raw/refs/heads/master/media/calculatorGUI.mp4)
 
 ## Installation
 
