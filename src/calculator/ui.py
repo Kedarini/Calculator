@@ -6,10 +6,6 @@ from datetime import datetime
 import random
 import math
 import re
-
-# Zakładam, że masz moduł logic.py z funkcjami:
-# evaluate_expression(expr) → zwraca string (wynik lub "Division by zero", "Error" itp.)
-# set_angle_mode(mode)      → "DEG" / "RAD"
 from .logic import evaluate_expression, set_angle_mode
 
 
