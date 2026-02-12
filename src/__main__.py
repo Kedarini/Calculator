@@ -1,5 +1,5 @@
 import tkinter as tk
-from .ui import CalculatorGUI
+from calculator.ui import CalculatorGUI
 
 def main():
     root = tk.Tk()
