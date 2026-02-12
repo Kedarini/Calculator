@@ -1,4 +1,5 @@
 import tkinter as tk
+from readline import clear_history
 from tkinter import ttk
 import json
 from pathlib import Path
@@ -72,13 +73,32 @@ class CalculatorGUI:
         hist_frame = tk.Frame(main, bg=self.BG)
         hist_frame.grid(row=0, column=1, sticky="nsew", padx=(12, 0))
 
+        hist_header = tk.Frame(hist_frame, bg=self.BG)
+        hist_header.pack(fill="x", pady=(0, 4))
+
         tk.Label(
-            hist_frame,
+            hist_header,
             text="History",
             bg=self.BG,
             fg=self.TEXT,
             font=("Arial", 12, "bold")
-        ).pack(anchor="w", pady=(0, 4))
+        ).pack(side="left")
+
+        clear_btn = tk.Button(
+            hist_header,
+            text="Clear",
+            font=("Arial", 10, "bold"),
+            bg=self.BTN_ALT,
+            fg=self.TEXT,
+            bd=0,
+            padx=10,
+            pady=2,
+            relief="flat",
+            activebackground="#5e81ac",
+            activeforeground=self.TEXT,
+            command=self.clear_history
+        )
+        clear_btn.pack(side="right")
 
         list_container = tk.Frame(hist_frame, bg=self.BG)
         list_container.pack(fill="both", expand=True)
@@ -87,6 +107,7 @@ class CalculatorGUI:
             list_container,
             font=("Arial", 11),
             width=40,
+            height=2,
             bg=self.ENTRY_BG,
             fg=self.TEXT,
             bd=0,
@@ -192,6 +213,12 @@ class CalculatorGUI:
         self.history_box.insert(tk.END, entry)
         self.history_box.see(tk.END)
         self.save_history()
+
+    def clear_history(self):
+            self.history_entries.clear()
+            self.history_box.delete(0, tk.END)
+            with self.history_file.open("w", encoding="utf-8") as f:
+                json.dump({}, f, indent=2)
 
     # ────────────────────────────────────────────────
     # Unary operations
