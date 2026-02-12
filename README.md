@@ -12,7 +12,7 @@ A **full-featured scientific calculator** with a clean graphical user interface 
   - Powers & roots: x², xʸ, √, ∛, x⁻¹
   - Constants: π, e
   - Other: factorial (!), abs, floor/ceil and more
-- **Calculation history** panel — shows previous expressions + results
+- **Calculation history** panel shows previous expressions + results
 - **Persistent history** saved to `history.json` (loads on startup)
 - Input validation & friendly error messages (division by zero, domain errors, syntax errors)
 - Responsive button styling, hover effects
