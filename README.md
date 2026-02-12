@@ -19,7 +19,10 @@ A **full-featured scientific calculator** with a clean graphical user interface 
 
 ## Screenshots
 
-![video](https://github.com/Kedarini/Calculator/raw/refs/heads/master/media/calculatorGUI.gif)
+<div style="text-align: center;">
+  <img src="https://github.com/Kedarini/Calculator/raw/refs/heads/master/media/calculatorGUI.gif" width="450px" alt="Calculator demo">
+  <br><em>Animated demo of the scientific calculator</em>
+</div>
 
 ## Installation
 
@@ -40,6 +43,5 @@ python -m calculator
 
 ## TO DO
 
-* Add animated GIF showing how the calculator work
 * Improve code clarity and performance
 * Better documentation
