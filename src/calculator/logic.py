@@ -1,22 +1,12 @@
 import operator
 import math
 import re
-import json
-import os
-from datetime import datetime
-
-# ────────────────────────────────────────────────
-# KONFIGURACJA
-# ────────────────────────────────────────────────
-
-ANGLE_MODE = "DEG"
-HISTORY_FILE = "history.json"
-MAX_HISTORY = 100
 
 
 # ────────────────────────────────────────────────
 # FUNKCJE TRYGONOMETRYCZNE
 # ────────────────────────────────────────────────
+ANGLE_MODE = "DEG"
 
 def set_angle_mode(mode: str):
     global ANGLE_MODE
@@ -25,22 +15,21 @@ def set_angle_mode(mode: str):
     ANGLE_MODE = mode
 
 
-def sin(x):    return math.sin(math.radians(x)) if ANGLE_MODE == "DEG" else math.sin(x)
+def _to_rad(x: float) -> float:
+    return math.radians(x) if ANGLE_MODE == "DEG" else x
 
 
-def cos(x):    return math.cos(math.radians(x)) if ANGLE_MODE == "DEG" else math.cos(x)
+def _from_rad(x: float) -> float:
+    return math.degrees(x) if ANGLE_MODE == "DEG" else x
 
 
-def tan(x):    return math.tan(math.radians(x)) if ANGLE_MODE == "DEG" else math.tan(x)
+def sin(x):    return math.sin(_to_rad(x))
+def cos(x):    return math.cos(_to_rad(x))
+def tan(x):    return math.tan(_to_rad(x))
 
-
-def asin(x):   v = math.asin(x);   return math.degrees(v) if ANGLE_MODE == "DEG" else v
-
-
-def acos(x):   v = math.acos(x);   return math.degrees(v) if ANGLE_MODE == "DEG" else v
-
-
-def atan(x):   v = math.atan(x);   return math.degrees(v) if ANGLE_MODE == "DEG" else v
+def asin(x):   return _from_rad(math.asin(x))
+def acos(x):   return _from_rad(math.acos(x))
+def atan(x):   return _from_rad(math.atan(x))
 
 
 # ────────────────────────────────────────────────
@@ -70,41 +59,8 @@ PRECEDENCE = {
     "ln": (4, "R"), "log": (4, "R"), "exp": (4, "R"),
 }
 
-
 # ────────────────────────────────────────────────
-# HISTORIA JSON
-# ────────────────────────────────────────────────
-
-def load_history() -> list[str]:
-    if not os.path.exists(HISTORY_FILE):
-        return []
-    try:
-        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data.get("history", [])[-MAX_HISTORY:]
-    except Exception:
-        return []
-
-
-def save_history(history: list[str]):
-    try:
-        data = {
-            "history": history[-MAX_HISTORY:],
-            "last_updated": datetime.now().isoformat()
-        }
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass  # cicho ignorujemy błędy zapisu
-
-
-def format_history_entry(expr: str, result: str) -> str:
-    time_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-    return f"[{time_str}] {expr} = {result}"
-
-
-# ────────────────────────────────────────────────
-# PARSER + EVALUATOR (oryginalna sygnatura!)
+# PARSER + EVALUATOR
 # ────────────────────────────────────────────────
 
 def add_spaces(expr: str) -> str:
@@ -181,7 +137,6 @@ def evaluate_rpn(tokens: list[str]) -> float:
 
 
 def evaluate_expression(expression: str) -> str:
-    """Oryginalna sygnatura – zwraca tylko string (wynik lub błąd)"""
     if not expression.strip():
         return ""
 
@@ -190,12 +145,6 @@ def evaluate_expression(expression: str) -> str:
         result = evaluate_rpn(rpn)
         CONSTANTS["Ans"] = result
 
-        # ─── Dodajemy do historii ───────────────────────────────
-        history = load_history()
-        entry = format_history_entry(expression.strip(), str(result))
-        history.append(entry)
-        save_history(history)
-        # ─────────────────────────────────────────────────────────
 
         return str(result)
 
@@ -203,5 +152,5 @@ def evaluate_expression(expression: str) -> str:
         return "Division by zero"
     except ValueError as e:
         return f"Error: {str(e)}"
-    except Exception:
+    except Exception():
         return "Error"

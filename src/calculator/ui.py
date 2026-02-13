@@ -1,5 +1,4 @@
 import tkinter as tk
-from readline import clear_history
 from tkinter import ttk
 import json
 from pathlib import Path
@@ -232,62 +231,48 @@ class CalculatorGUI:
         try:
             value = float(current)
 
-            if op == "1/x":
-                result = 1 / value
-                hist_text = f"1/x({current})"
-            elif op in ("√", "√x"):
-                result = math.sqrt(value)
-                hist_text = f"√({current})"
-            elif op == "³√x":
-                result = value ** (1/3)
-                hist_text = f"³√({current})"
-            elif op == "x²":
-                result = value ** 2
-                hist_text = f"({current})²"
-            elif op == "x³":
-                result = value ** 3
-                hist_text = f"({current})³"
+            # ─── Simple operations ───────────────────────────────────────────
+            simple_ops = {
+                "1/x": (lambda x: 1 / x, lambda c: f"1/x({c})"),
+                "√": (math.sqrt, lambda c: f"√({c})"),
+                "√x": (math.sqrt, lambda c: f"√({c})"),
+                "³√x": (lambda x: x ** (1 / 3), lambda c: f"³√({c})"),
+                "x²": (lambda x: x ** 2, lambda c: f"({c})²"),
+                "x³": (lambda x: x ** 3, lambda c: f"({c})³"),
+                "%": (lambda x: x / 100, lambda c: f"{c}%"),
+                "ln": (math.log, lambda c: f"ln({c})"),
+                "log": (math.log10, lambda c: f"log({c})"),
+                "eˣ": (math.exp, lambda c: f"e^({c})"),
+                "10ˣ": (lambda x: 10 ** x, lambda c: f"10^({c})"),
+            }
+
+            if op in simple_ops:
+                func, hist_fmt = simple_ops[op]
+                result = func(value)
+                hist_text = hist_fmt(current)
+
+            # ─── Factorial ──────────────────────────────────────────────────
             elif op in ("!", "n!"):
                 if not value.is_integer() or value < 0:
                     raise ValueError("Factorial only for non-negative integers")
                 result = math.factorial(int(value))
                 hist_text = f"{int(value)}!"
-            elif op == "%":
-                result = value / 100
-                hist_text = f"{current}%"
-            elif op == "sin":
+
+            # ─── Trigonometric functions ────────────────────────────────────
+            elif op in ("sin", "cos", "tan"):
+                func = {"sin": math.sin, "cos": math.cos, "tan": math.tan}[op]
                 rad = math.radians(value) if self.angle_mode == "DEG" else value
-                result = math.sin(rad)
-                hist_text = f"sin({current})"
-            elif op == "cos":
-                rad = math.radians(value) if self.angle_mode == "DEG" else value
-                result = math.cos(rad)
-                hist_text = f"cos({current})"
-            elif op == "tan":
-                rad = math.radians(value) if self.angle_mode == "DEG" else value
-                result = math.tan(rad)
-                hist_text = f"tan({current})"
-            elif op == "sin⁻¹":
-                result = math.degrees(math.asin(value)) if self.angle_mode == "DEG" else math.asin(value)
-                hist_text = f"asin({current})"
-            elif op == "cos⁻¹":
-                result = math.degrees(math.acos(value)) if self.angle_mode == "DEG" else math.acos(value)
-                hist_text = f"acos({current})"
-            elif op == "tan⁻¹":
-                result = math.degrees(math.atan(value)) if self.angle_mode == "DEG" else math.atan(value)
-                hist_text = f"atan({current})"
-            elif op == "ln":
-                result = math.log(value)
-                hist_text = f"ln({current})"
-            elif op == "log":
-                result = math.log10(value)
-                hist_text = f"log({current})"
-            elif op == "eˣ":
-                result = math.exp(value)
-                hist_text = f"e^({current})"
-            elif op == "10ˣ":
-                result = 10 ** value
-                hist_text = f"10^({current})"
+                result = func(rad)
+                hist_text = f"{op}({current})"
+
+            elif op in ("sin⁻¹", "cos⁻¹", "tan⁻¹"):
+                func = {"sin⁻¹": math.asin, "cos⁻¹": math.acos, "tan⁻¹": math.atan}[op]
+                val = func(value)
+                result = math.degrees(val) if self.angle_mode == "DEG" else val
+                # nicer history names: asin / acos / atan
+                clean_op = {"sin⁻¹": "asin", "cos⁻¹": "acos", "tan⁻¹": "atan"}[op]
+                hist_text = f"{clean_op}({current})"
+
             else:
                 return
 
@@ -299,7 +284,7 @@ class CalculatorGUI:
             self.entry_var.set("Error")
 
     # ────────────────────────────────────────────────
-    # Pozostałe metody (bez zmian lub drobne poprawki)
+    # Pozostałe metody
     # ────────────────────────────────────────────────
 
     def get_command(self, char):
@@ -372,32 +357,35 @@ class CalculatorGUI:
         self.entry_var.set(formatted)
         self.add_to_history(expr, formatted)
 
+    def toggle_precision(self):
+        self.precision_mode = "FIXED" if self.precision_mode == "FLOAT" else "FLOAT"
+        self.precision_btn.config(text=self.precision_mode)
+
     def toggle_angle(self):
         self.angle_mode = "RAD" if self.angle_mode == "DEG" else "DEG"
         self.angle_btn.config(text=self.angle_mode)
         set_angle_mode(self.angle_mode)
 
-    def toggle_precision(self):
-        self.precision_mode = "FIXED" if self.precision_mode == "FLOAT" else "FLOAT"
-        self.precision_btn.config(text=self.precision_mode)
-
     def random_number(self):
-        rnd = round(random.random(), 6)
-        self.entry_var.set(self.entry_var.get() + str(rnd))
+        self.entry_var.set(self.entry_var.get() + f"{random.random():.6f}")
 
     def memory_op(self, op):
         try:
-            if op in ('M+', 'M-'):
-                current = self.entry_var.get().strip()
-                if not current or current == "Error":
-                    return
-                val = float(evaluate_expression(current))
-                if op == 'M+':
-                    self.memory += val
-                elif op == 'M-':
-                    self.memory -= val
-            elif op == 'MR':
+            current = self.entry_var.get().strip()
+            if not current or current == "Error":
+                return
+
+            if op == "MR":
                 self.entry_var.set(str(self.memory))
+                return
+
+            # M+ / M-
+            val = float(evaluate_expression(current))
+            if op == "M+":
+                self.memory += val
+            else:  # M-
+                self.memory -= val
+
         except:
             self.entry_var.set("Error")
 
@@ -410,18 +398,17 @@ class CalculatorGUI:
     def format_number(self, value):
         try:
             v = float(value)
-        except:
+        except (TypeError, ValueError):
             return str(value)
 
         if self.precision_mode == "FIXED":
             s = f"{v:.{self.fixed_decimals}f}"
-            return s.rstrip('0').rstrip('.') if '.' in s else s
-        if abs(v) >= 1e12 or (0 < abs(v) < 1e-8 and v != 0):
+            return s.rstrip("0").rstrip(".") if "." in s else s
+
+        if v == 0:
+            return "0"
+
+        if abs(v) >= 1e12 or (0 < abs(v) < 1e-8):
             return f"{v:.8e}"
+
         return f"{v:g}"
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = CalculatorGUI(root)
-    root.mainloop()
