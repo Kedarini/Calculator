@@ -40,8 +40,3 @@ source .venv/bin/activate      # Linux / macOS
 # 3. Run the calculator
 python -m calculator
 ```
-
-## TO DO
-
-* Improve code clarity and performance
-* Better documentation
